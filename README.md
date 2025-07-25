@@ -1,8 +1,9 @@
 # VPS Security Setup Guide
 
-A quick guide to securely configure a fresh VPS with proper user management, SSH hardening, and firewall configuration. 
+A quick guide to securely configure a fresh VPS with proper user management, SSH hardening, and firewall configuration.
 
 ## Prerequisites
+
 - Fresh Ubuntu/Debian VPS
 - Root access via SSH
 - SSH client on your local machine
@@ -14,17 +15,20 @@ A quick guide to securely configure a fresh VPS with proper user management, SSH
 ## Step 1: Create Non-Root User with Sudo Privileges
 
 **Connect as root:**
+
 ```bash
 ssh root@your_server_ip
 ```
 
 **Create new user:**
+
 ```bash
 adduser username
 usermod -aG sudo username
 ```
 
 **Test sudo access:**
+
 ```bash
 su - username
 sudo whoami  # Should return 'root'
@@ -33,6 +37,7 @@ sudo whoami  # Should return 'root'
 ## Step 2: Generate and Configure SSH Keys
 
 **On your local machine, generate SSH key pair:**
+
 ```bash
 ssh-keygen -t ed25519 -C "your_email@domain.com"
 # Save to default location: ~/.ssh/id_ed25519
@@ -40,6 +45,7 @@ ssh-keygen -t ed25519 -C "your_email@domain.com"
 ```
 
 **For custom key location (optional):**
+
 ```bash
 # Generate key with custom name/location
 ssh-keygen -t ed25519 -f ~/.ssh/my_vps_key -C "your_email@domain.com"
@@ -49,6 +55,7 @@ ssh-keygen -t ed25519 -f ~/.ssh/my_vps_key -C "your_email@domain.com"
 ```
 
 **Copy public key to VPS:**
+
 ```bash
 # Using default key
 ssh-copy-id username@your_server_ip
@@ -58,6 +65,7 @@ ssh-copy-id -i ~/.ssh/my_vps_key.pub username@your_server_ip
 ```
 
 **Alternatively, manual setup on VPS:**
+
 ```bash
 # On VPS as your user
 mkdir -p ~/.ssh
@@ -73,6 +81,7 @@ chmod 600 ~/.ssh/authorized_keys
 ```
 
 **Test key authentication:**
+
 ```bash
 ssh username@your_server_ip
 ```
@@ -80,16 +89,19 @@ ssh username@your_server_ip
 ## Step 3: Harden SSH Configuration
 
 **Backup original SSH config:**
+
 ```bash
 sudo cp /etc/ssh/sshd_config /etc/ssh/sshd_config.backup
 ```
 
 **Edit SSH configuration:**
+
 ```bash
 sudo nano /etc/ssh/sshd_config
 ```
 
 **Apply these security settings:**
+
 ```bash
 # Change default port (choose between 1024-65535)
 Port 2222
@@ -114,6 +126,7 @@ AllowUsers username  # Replace with your username
 ```
 
 **Test configuration and restart SSH:**
+
 ```bash
 sudo sshd -t  # Test config syntax
 sudo systemctl restart ssh
@@ -126,6 +139,7 @@ sudo systemctl restart ssh.socket
 ## Step 4: Update Local SSH Config
 
 **Create/edit ~/.ssh/config on your local machine:**
+
 ```bash
 # Using default key
 Host vps
@@ -143,6 +157,7 @@ Host vps-custom
 ```
 
 **Test connection with new config:**
+
 ```bash
 # Using default key config
 ssh vps
@@ -157,6 +172,7 @@ ssh -i ~/.ssh/my_vps_key -p 2222 username@your_server_ip
 ## Step 5: Configure UFW Firewall
 
 **Install and configure UFW:**
+
 ```bash
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
@@ -196,6 +212,7 @@ sudo ufw enable
 ### SSH-Only Configuration (Maximum Security)
 
 **For servers that only need SSH access (no web services):**
+
 ```bash
 # Reset firewall rules
 sudo ufw --force reset
@@ -219,6 +236,7 @@ sudo ufw status numbered
 ## Step 6: Additional Security Measures
 
 **Install fail2ban:**
+
 ```bash
 sudo apt update
 sudo apt install fail2ban
@@ -228,6 +246,7 @@ sudo nano /etc/fail2ban/jail.local
 ```
 
 **Fail2ban configuration:**
+
 ```ini
 [DEFAULT]
 bantime = 3600
@@ -242,18 +261,21 @@ logpath = /var/log/auth.log
 ```
 
 **Start fail2ban:**
+
 ```bash
 sudo systemctl enable fail2ban
 sudo systemctl start fail2ban
 ```
 
 **Enable automatic security updates:**
+
 ```bash
 sudo apt install unattended-upgrades
 sudo dpkg-reconfigure -plow unattended-upgrades
 ```
 
 **Create swap file (recommended for small VPS):**
+
 ```bash
 sudo fallocate -l 1G /swapfile
 sudo chmod 600 /swapfile
@@ -265,11 +287,13 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ## Step 7: Verification and Testing
 
 **Test SSH connection:**
+
 ```bash
 ssh vps  # Should connect without password using your config
 ```
 
 **Verify security settings:**
+
 ```bash
 # Check firewall status and rules
 sudo ufw status verbose
@@ -289,12 +313,14 @@ sudo sshd -T | grep -E "(port|permitrootlogin|passwordauthentication|pubkeyauthe
 ## Important Security Notes
 
 ⚠️ **Critical Warnings:**
+
 - Always test SSH connections in a new terminal before closing your current session
 - Ensure UFW allows your custom SSH port before enabling the firewall
 - Keep your SSH private key secure and use a strong passphrase
 - Consider using different SSH keys for different servers
 
 🔒 **Additional Recommendations:**
+
 - Set up monitoring and log analysis
 - Configure regular backups
 - Use strong, unique passwords for all accounts
@@ -305,13 +331,26 @@ sudo sshd -T | grep -E "(port|permitrootlogin|passwordauthentication|pubkeyauthe
 ## Troubleshooting
 
 **If locked out of SSH:**
+
 - Use VPS console access from your provider's control panel
 - Check SSH configuration: `sudo sshd -t`
 - Restart SSH service: `sudo systemctl restart ssh`
 - If restart fails: `sudo systemctl daemon-reload` and  `sudo systemctl restart ssh.socket`
 
 **Common issues:**
+
 - Wrong port in firewall rules
 - SSH key permissions (should be 600 for private key, 644 for public key)
 - SSH config syntax errors
-- Using old RSA keys instead of Ed25519 
+- Using old RSA keys instead of Ed25519
+
+# Packages to Install
+
+- TUI based file explorer - [Yazi](https://github.com/sxyazi/yazi)
+
+```bash
+sudo snap install yazi --classic
+```
+
+- TUI based docker client [Lazydocker](https://github.com/jesseduffield/lazydocker)
+
